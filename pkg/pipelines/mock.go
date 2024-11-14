@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ PipelineRunner = (*MockRunner)(nil)
@@ -28,19 +29,20 @@ type run struct {
 	params             []pipelinev1.Param
 	resources          []pipelinev1.PipelineResourceBinding
 	workspaces         []pipelinev1.WorkspaceBinding
+	timeout            *metav1.Duration
 }
 
 // Run is an implementation of the PipelineRunner interface.
-func (m *MockRunner) Run(ctx context.Context, pipelineName, ns, serviceAccountName string, params []pipelinev1.Param, res []pipelinev1.PipelineResourceBinding, ws []pipelinev1.WorkspaceBinding) (*pipelinev1.PipelineRun, error) {
+func (m *MockRunner) Run(ctx context.Context, pipelineName, ns, serviceAccountName string, params []pipelinev1.Param, res []pipelinev1.PipelineResourceBinding, ws []pipelinev1.WorkspaceBinding, to *metav1.Duration) (*pipelinev1.PipelineRun, error) {
 	if m.runError != nil {
 		return nil, m.runError
 	}
-	m.runs[mockKey(ns, pipelineName)] = run{serviceAccountName: serviceAccountName, params: params, resources: res, workspaces: ws}
+	m.runs[mockKey(ns, pipelineName)] = run{serviceAccountName: serviceAccountName, params: params, resources: res, workspaces: ws, timeout: to}
 	return &pipelinev1.PipelineRun{}, nil
 }
 
 // AssertPipelineRun ensures that the pipeline run was triggered.
-func (m *MockRunner) AssertPipelineRun(pipelineName, ns string, serviceAccountName string, wantParams []pipelinev1.Param, wantResources []pipelinev1.PipelineResourceBinding, wantWorkspaces []pipelinev1.WorkspaceBinding) {
+func (m *MockRunner) AssertPipelineRun(pipelineName, ns string, serviceAccountName string, wantParams []pipelinev1.Param, wantResources []pipelinev1.PipelineResourceBinding, wantWorkspaces []pipelinev1.WorkspaceBinding, wantTimeout *metav1.Duration) {
 	m.t.Helper()
 	run, ok := m.runs[mockKey(ns, pipelineName)]
 	if !ok {
@@ -60,6 +62,10 @@ func (m *MockRunner) AssertPipelineRun(pipelineName, ns string, serviceAccountNa
 
 	if diff := cmp.Diff(wantWorkspaces, run.workspaces); diff != "" {
 		m.t.Fatalf("incorrect workspaces for pipeline run:\n%s", diff)
+	}
+
+	if diff := cmp.Diff(wantTimeout, run.timeout); diff != "" {
+		m.t.Fatalf("incorrect timeout for pipeline run:\n%s", diff)
 	}
 }
 

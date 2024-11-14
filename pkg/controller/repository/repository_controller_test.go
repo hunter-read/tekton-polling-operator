@@ -37,6 +37,7 @@ const (
 	testCommitETag          = `W/"878f43039ad0553d0d3122d8bc171b01"`
 	testPipelineName        = "test-pipeline"
 	testServiceAccountName  = "test-sa"
+	testTimeout             = time.Second * 10
 )
 
 var (
@@ -74,7 +75,7 @@ func TestReconcileRepositoryWithEmptyPollState(t *testing.T) {
 		testPipelineName, testRepositoryNamespace,
 		testServiceAccountName,
 		makeTestParams(map[string]string{"one": testRepoURL, "two": "main"}),
-		testResources, testWorkspaces)
+		testResources, testWorkspaces, &metav1.Duration{Duration: testTimeout})
 
 	wantStatus := pollingv1.RepositoryStatus{
 		PollStatus: pollingv1.PollStatus{
@@ -114,7 +115,7 @@ func TestReconcileRepositoryInPipelineNamespace(t *testing.T) {
 		testPipelineName, pipelineNS,
 		testServiceAccountName,
 		makeTestParams(map[string]string{"one": testRepoURL, "two": "main"}),
-		testResources, testWorkspaces)
+		testResources, testWorkspaces, &metav1.Duration{Duration: testTimeout})
 
 	wantStatus := pollingv1.RepositoryStatus{
 		PollStatus: pollingv1.PollStatus{
@@ -317,6 +318,7 @@ func makeRepository(opts ...func(*pollingv1.Repository)) *pollingv1.Repository {
 				},
 				Resources:  testResources,
 				Workspaces: testWorkspaces,
+				Timeout: &metav1.Duration{Duration: testTimeout},
 			},
 		},
 		Status: pollingv1.RepositoryStatus{},

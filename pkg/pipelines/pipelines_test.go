@@ -3,6 +3,7 @@ package pipelines
 import (
 	"context"
 	"testing"
+	"time"
 
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	resourcev1alpha1 "github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1"
@@ -23,6 +24,7 @@ const (
 	testSHA                = "35576600886452a3f0f2e9d459924865f4007614"
 	testNamespace          = "test-namespace"
 	testServiceAccountName = "test-sa"
+	testTimeout            = time.Second * 10
 )
 
 var _ PipelineRunner = (*ClientPipelineRunner)(nil)
@@ -61,7 +63,7 @@ func TestRunPipelineCreatesPipelineRun(t *testing.T) {
 			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: "test-pvc"},
 		},
 	}
-	_, err := r.Run(context.Background(), testPipelineName, testNamespace, testServiceAccountName, params, resources, workspaces)
+	_, err := r.Run(context.Background(), testPipelineName, testNamespace, testServiceAccountName, params, resources, workspaces, &metav1.Duration{Duration: testTimeout})
 
 	pr := &pipelinev1.PipelineRun{}
 	err = cl.Get(context.Background(), types.NamespacedName{
@@ -101,6 +103,7 @@ func TestRunPipelineCreatesPipelineRun(t *testing.T) {
 					PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{ClaimName: "test-pvc"},
 				},
 			},
+			Timeout: &metav1.Duration{time.Second * 10},
 		},
 	}
 

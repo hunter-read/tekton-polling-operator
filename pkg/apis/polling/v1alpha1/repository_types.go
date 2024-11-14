@@ -35,6 +35,7 @@ type PipelineRef struct {
 	Params             []Param                              `json:"params,omitempty"`
 	Resources          []pipelinev1.PipelineResourceBinding `json:"resources,omitempty"`
 	Workspaces         []pipelinev1.WorkspaceBinding        `json:"workspaces,omitempty"`
+	Timeout            *metav1.Duration                     `json:"timeout,omitempty"`
 }
 
 type Param struct {
